@@ -22,3 +22,24 @@ jobs:
       run: |
         mvn clean
         mvn -B package --file pom.xml  
+    - name: Create Timestamp for version info
+      id: time
+      uses: nanzm/get-time-action@master
+      with:
+        format: 'YYYY-MM-DD-HH-mm-ss'
+    - name: Make Artifact Available
+      uses: actions/upload-artifact@v2
+      with:
+        name: "Artifact-${{steps.time.outputs.time}}"
+        path: build/libs
+        retention-days: 5
+    - name: Deploy to AWS Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v21
+      with:
+        aws_access_key: ${{secrets.AWS_ACCESS_KEY_ID}}
+        aws_secret_key: ${{secrets.AWS_SECRET_KEY_ID}}
+        application_name: imageuploaderapi
+        environment_name: Imageuploaderapi-env-1
+        version_label: imageuploaderapi-${{steps.time.outputs.time}}
+        region: us-east-1
+        deployment_package: target/image-uploder-0.0.1-SNAPSHOT.jar
